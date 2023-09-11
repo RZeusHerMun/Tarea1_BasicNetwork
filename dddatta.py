@@ -1,6 +1,14 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Sep  7 10:14:45 2023
+
+@author: el_he
+"""
+
 """
 Este es el código que va a cargar y leer los datos con los que 
-disponemos.
+disponemos. Tuve que cambiar el código que tenía por que no me corría. 
+Entonces cambié el nombre y se solucionó.
 """
 
 import pickle

@@ -1,10 +1,10 @@
-import carga_datos
+import dddatta
 """
 Cargamos el código que sube lee los datos y leemos los 
 training data, los datos de validación y los del test.
 Preparamos los datos de entrenamiento en una vector
 """
-training_data, validation_data, test_data = carga_datos.load_data_wrapper()
+training_data, validation_data, test_data = dddatta.load_data_wrapper()
 training_data = list(training_data)
 
 
