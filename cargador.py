@@ -1,26 +1,26 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Sep  7 10:14:45 2023
+#!/usr/bin/env python
+# coding: utf-8
 
-@author: el_he
-"""
+# In[1]:
 
-"""
-Este es el código que va a cargar y leer los datos con los que 
-disponemos. Tuve que cambiar el código que tenía por que no me corría. 
-Entonces cambié el nombre y se solucionó.
-"""
 
 import pickle
 import gzip
-
 import numpy as np
+
+
+# In[2]:
+
 
 def load_data(): # Esta función desencripta los datos, los organiza en listas y los codifica en un formato específico. 
     f = gzip.open('mnist.pkl.gz', 'rb')
     training_data, validation_data, test_data = pickle.load(f, encoding="latin1")
     f.close()
     return (training_data, validation_data, test_data)
+
+
+# In[3]:
+
 
 def load_data_wrapper(): # Con esta función vamos a organizar nuestros datos en las matrices que necesitamos
     tr_d, va_d, te_d = load_data() # usamos diminutivos para las listas
@@ -38,7 +38,17 @@ def load_data_wrapper(): # Con esta función vamos a organizar nuestros datos en
     return (training_data, validation_data, test_data) #damos las matrices creadas.
 
 
+# In[4]:
+
+
 def vectorized_result(j): # Establecemos una función que nos dé el vector donde se alojarán los números del 0 al 9, que serán las neuronas de salida.
     e = np.zeros((10, 1))
     e[j] = 1.0
     return e
+
+
+# In[ ]:
+
+
+
+

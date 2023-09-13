@@ -1,5 +1,31 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[11]:
+
+
 import random
 import numpy as np
+
+
+# In[12]:
+
+
+def sigmoid(z):
+    """Esta es la funcion sigmoide que usaremos"""
+    return 1.0/(1.0+np.exp(-z))
+
+
+# In[13]:
+
+
+def sigmoid_prime(z):
+    """Y aqui­ definimos la derivada de la funcion sigmoide."""
+    return sigmoid(z)*(1-sigmoid(z))
+
+
+# In[17]:
+
 
 class Network(object):
 
@@ -10,26 +36,30 @@ class Network(object):
         self.biases = [np.random.randn(y, 1) for y in sizes[1:]]# Llenamos un vector con bias aleatorios.
         self.weights = [np.random.randn(y, x)# Tambien llenamos un vector de la matriz con los weights aleatorios.
                         for x, y in zip(sizes[:-1], sizes[1:])]
-
+        # se tratará de implementar el sgd con inercia. 
+        self.vel_w = [np.zeros_like(w) for w in self.weights]
+        self.vel_b = [np.zeros_like(b) for b in self.biases]
+        
     def feedforward(self, a):
         """Esta función nos da el valor de inicialización 'a' determinandolo a partir de la f. sigmoide."""
         for b, w in zip(self.biases, self.weights):
             a = sigmoid(np.dot(w, a)+b)
         return a
-
+    
     def SGD(self, training_data, epochs, mini_batch_size, eta,
             test_data=None):
         """Esta función es el Stochastic Gradient Descent; recordando que basa su función en 
         obtener los weights adecuados con el back propagation, ademas de que calcula solo una derivada 
         por minibatch."""
-
         training_data = list(training_data)
         n = len(training_data)# Leemos los datos en forma de lista y los contamos.
-
+        test_accuracy = []
+        test_performance = []
         if test_data:# Aqui comenzamos el entrenamiento
             test_data = list(test_data)
             n_test = len(test_data)# Convertimos los datos de prueba y los contamos.
-
+            git        
+        
         for j in range(epochs):# Para el numero de epocas q definamos se entrenara como sigue.
             random.shuffle(training_data)#Barajeamos los datos de entrenamiento
             mini_batches = [
@@ -37,12 +67,19 @@ class Network(object):
                 for k in range(0, n, mini_batch_size)]#Dividimos los datos entre el numero de minibatchs.
             for mini_batch in mini_batches:
                 self.update_mini_batch(mini_batch, eta)# Ahora actualizamos los datos de los minibatchs ahora tambien integrando el LearningRate
+            
             if test_data:
-                print("Epoch {} : {} / {}".format(j,self.evaluate(test_data),n_test))# imprimimos el resultado de el entrenamiento con los datos del modelo.
+                print("Epoca {} : {} / {}".format(j,self.evaluate(test_data),n_test))# imprimimos el resultado de el entrenamiento con los datos del modelo.
+                test_accuracy = self.evaluate(test_data) / n_test
+                test_performance.append(test_accuracy)
+                
             else:
-                print("Epoch {} complete".format(j))# Este es por si no tenemos datos de prueba, para ver que van terminando las epocas.
+                print("Epoca {} terminada".format(j))# Este es por si no tenemos datos de prueba, para ver que van terminando las epocas.
+            
+        print(test_performance)
+        
 
-    def update_mini_batch(self, mini_batch, eta):
+    def update_mini_batch(self, mini_batch, eta, mu=0.9):
         """Aqui definimos la actualizacion de los bias y los weights de los minibatchs"""
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights] # Usamos dos listas para almacenar las sumas de los gradientes de cada minibatch. Son del mismo tamano que las de las bias y los weights.
@@ -50,11 +87,18 @@ class Network(object):
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-        self.weights = [w-(eta/len(mini_batch))*nw
-                        for w, nw in zip(self.weights, nabla_w)]
+        '''self.weights = [w-(eta/len(mini_batch))*nw
+                        for w, nw in zip(self.weights, nabla_w)] #lo comente para que no se tome en cuenta y probemos el incercia
         self.biases = [b-(eta/len(mini_batch))*nb
-                       for b, nb in zip(self.biases, nabla_b)]#Cuando se calculan todos los gradientes del minibatch, se actualizan los bias y los weights con la resta del aprendizaje.
-
+                       for b, nb in zip(self.biases, nabla_b)]'''#Cuando se calculan todos los gradientes del minibatch, se actualizan los bias y los weights con la resta del aprendizaje.
+        # aqui es donde se actualizarían los pesos y los bias con la incercia del sgd.
+        self.velocity_weights = [mu * v - (eta / len(mini_batch)) * nw 
+                                 for v, nw in zip(self.velocity_weights, nabla_w)]
+        self.weights = [w + v for w, v in zip(self.weights, self.velocity_weights)]
+    
+        self.velocity_biases = [mu * v - (eta / len(mini_batch)) * nb for v, nb in zip(self.velocity_biases, nabla_b)]
+        self.biases = [b + v for b, v in zip(self.biases, self.velocity_biases)]
+    
     def backprop(self, x, y):
         """Codigo del Algoritmo BackPropagation"""
         nabla_b = [np.zeros(b.shape) for b in self.biases] # Creamos las listas con los bias y los weights determinados.
@@ -69,8 +113,7 @@ class Network(object):
             activation = sigmoid(z) # Se calcula el valor de la f sigmoide con la a calculada
             activations.append(activation) # la agregamos a la lista
         
-        delta = self.cost_derivative(activations[-1], y) * \
-            sigmoid_prime(zs[-1])# una vez tenemos la lista de las activaciones, sacamos el error de la ultima capa.
+        delta = self.cost_derivative(activations[-1], y) *             sigmoid_prime(zs[-1])# una vez tenemos la lista de las activaciones, sacamos el error de la ultima capa.
         nabla_b[-1] = delta
         nabla_w[-1] = np.dot(delta, activations[-2].transpose()) # guardamos los errores en las listas "nablas" de atras hacia adelante.
 
@@ -91,12 +134,11 @@ class Network(object):
     def cost_derivative(self, output_activations, y):
         """ Definimos la funcion de costo con la derivada respecto a las activaciones de salida."""
         return (output_activations-y)
+    
 
 
-def sigmoid(z):
-    """Esta es la funcion sigmoide que usaremos"""
-    return 1.0/(1.0+np.exp(-z))
+# In[ ]:
 
-def sigmoid_prime(z):
-    """Y aqui­ definimos la derivada de la funcion sigmoide."""
-    return sigmoid(z)*(1-sigmoid(z))
+
+
+
