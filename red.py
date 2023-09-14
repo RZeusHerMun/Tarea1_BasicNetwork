@@ -1,30 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[11]:
+# In[1]:
 
 
 import random
 import numpy as np
 
 
-# In[12]:
-
-
-def sigmoid(z):
-    """Esta es la funcion sigmoide que usaremos"""
-    return 1.0/(1.0+np.exp(-z))
-
-
-# In[13]:
-
-
-def sigmoid_prime(z):
-    """Y aqui­ definimos la derivada de la funcion sigmoide."""
-    return sigmoid(z)*(1-sigmoid(z))
-
-
-# In[17]:
+# In[2]:
 
 
 class Network(object):
@@ -45,59 +29,58 @@ class Network(object):
         for b, w in zip(self.biases, self.weights):
             a = sigmoid(np.dot(w, a)+b)
         return a
-    
+        
     def SGD(self, training_data, epochs, mini_batch_size, eta,
             test_data=None):
         """Esta función es el Stochastic Gradient Descent; recordando que basa su función en 
         obtener los weights adecuados con el back propagation, ademas de que calcula solo una derivada 
         por minibatch."""
+
         training_data = list(training_data)
-        n = len(training_data)# Leemos los datos en forma de lista y los contamos.
-        test_accuracy = []
-        test_performance = []
-        if test_data:# Aqui comenzamos el entrenamiento
+        n = len(training_data)
+
+        if test_data:
             test_data = list(test_data)
-            n_test = len(test_data)# Convertimos los datos de prueba y los contamos.
-            git        
-        
-        for j in range(epochs):# Para el numero de epocas q definamos se entrenara como sigue.
-            random.shuffle(training_data)#Barajeamos los datos de entrenamiento
+            n_test = len(test_data)
+
+        for j in range(epochs):
+            random.shuffle(training_data)
             mini_batches = [
                 training_data[k:k+mini_batch_size]
-                for k in range(0, n, mini_batch_size)]#Dividimos los datos entre el numero de minibatchs.
+                for k in range(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
-                self.update_mini_batch(mini_batch, eta)# Ahora actualizamos los datos de los minibatchs ahora tambien integrando el LearningRate
-            
+                self.update_mini_batch(mini_batch, eta)
             if test_data:
-                print("Epoca {} : {} / {}".format(j,self.evaluate(test_data),n_test))# imprimimos el resultado de el entrenamiento con los datos del modelo.
-                test_accuracy = self.evaluate(test_data) / n_test
-                test_performance.append(test_accuracy)
-                
+                print("Epoch {} : {} / {}".format(j,self.evaluate(test_data),n_test))
             else:
-                print("Epoca {} terminada".format(j))# Este es por si no tenemos datos de prueba, para ver que van terminando las epocas.
-            
-        print(test_performance)
-        
-
-    def update_mini_batch(self, mini_batch, eta, mu=0.9):
+                print("Epoch {} complete".format(j))
+            # Esto era para hacer una grafica del aprendizaje de la red neuronal.
+                '''test_accuracy = self.evaluate(test_data) / n_test
+                test_performance.append(test_accuracy)
+                print(test_performance)'''
+    def update_mini_batch(self, mini_batch, eta):
         """Aqui definimos la actualizacion de los bias y los weights de los minibatchs"""
         nabla_b = [np.zeros(b.shape) for b in self.biases]
-        nabla_w = [np.zeros(w.shape) for w in self.weights] # Usamos dos listas para almacenar las sumas de los gradientes de cada minibatch. Son del mismo tamano que las de las bias y los weights.
-        for x, y in mini_batch:# En este ciclo usamos la funcion del BackPropagation definida mas abajo en la que calculamos los gradientes de C (la funcion de coste) con los bias y weights 'originales'. Despues sumamos a los gradientes definimos (los nabla)
+        nabla_w = [np.zeros(w.shape) for w in self.weights]# Usamos dos listas para almacenar las sumas de los gradientes de cada minibatch. Son del mismo tamano que las de las bias y los weights.
+        for x, y in mini_batch:# En este ciclo usamos la funcion del BackPropagation definida mas abajo en la que calculamos los gradientes de C (la funcion de coste) con los bias y weights 'originales'.
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-        '''self.weights = [w-(eta/len(mini_batch))*nw
-                        for w, nw in zip(self.weights, nabla_w)] #lo comente para que no se tome en cuenta y probemos el incercia
-        self.biases = [b-(eta/len(mini_batch))*nb
-                       for b, nb in zip(self.biases, nabla_b)]'''#Cuando se calculan todos los gradientes del minibatch, se actualizan los bias y los weights con la resta del aprendizaje.
+        self.weights = [w-(eta/len(mini_batch))*nw
+                        for w, nw in zip(self.weights, nabla_w)]
+        self.biases = [b-(eta/len(mini_batch))*nb#Cuando se calculan todos los gradientes del minibatch, se actualizan los bias y los weights con la resta del aprendizaje.
+                       for b, nb in zip(self.biases, nabla_b)]
         # aqui es donde se actualizarían los pesos y los bias con la incercia del sgd.
+        
+        '''voy a intentar comparar los tiempos en la SGD con y sin inercia (lo comentado es del d inercia)
         self.velocity_weights = [mu * v - (eta / len(mini_batch)) * nw 
                                  for v, nw in zip(self.velocity_weights, nabla_w)]
         self.weights = [w + v for w, v in zip(self.weights, self.velocity_weights)]
     
         self.velocity_biases = [mu * v - (eta / len(mini_batch)) * nb for v, nb in zip(self.velocity_biases, nabla_b)]
-        self.biases = [b + v for b, v in zip(self.biases, self.velocity_biases)]
+        self.biases = [b + v for b, v in zip(self.biases, self.velocity_biases)]'''
+        
+
     
     def backprop(self, x, y):
         """Codigo del Algoritmo BackPropagation"""
@@ -137,8 +120,18 @@ class Network(object):
     
 
 
-# In[ ]:
+# In[3]:
 
 
+def sigmoid(z):
+    """Esta es la funcion sigmoide que usaremos"""
+    return 1.0/(1.0+np.exp(-z))
 
+
+# In[4]:
+
+
+def sigmoid_prime(z):
+    """Y aqui definimos la derivada de la funcion sigmoide."""
+    return sigmoid(z)*(1-sigmoid(z))
 
