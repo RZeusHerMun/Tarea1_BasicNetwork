@@ -8,7 +8,7 @@ import random
 import numpy as np
 
 
-# In[2]:
+# In[10]:
 
 
 class Network(object):
@@ -20,7 +20,7 @@ class Network(object):
         self.biases = [np.random.randn(y, 1) for y in sizes[1:]]# Llenamos un vector con bias aleatorios.
         self.weights = [np.random.randn(y, x)# Tambien llenamos un vector de la matriz con los weights aleatorios.
                         for x, y in zip(sizes[:-1], sizes[1:])]
-        # se tratará de implementar el sgd con inercia. 
+        # se tratará de implementar el sgd con inercia. estos son los vectores que almacenan los valores con momentum
         self.vel_w = [np.zeros_like(w) for w in self.weights]
         self.vel_b = [np.zeros_like(b) for b in self.biases]
         
@@ -30,7 +30,7 @@ class Network(object):
             a = sigmoid(np.dot(w, a)+b)
         return a
         
-    def SGD(self, training_data, epochs, mini_batch_size, eta,
+    def SGD(self, training_data, epochs, mini_batch_size, eta,#intente poner el mu aqui pero no jalo
             test_data=None):
         """Esta función es el Stochastic Gradient Descent; recordando que basa su función en 
         obtener los weights adecuados con el back propagation, ademas de que calcula solo una derivada 
@@ -58,7 +58,8 @@ class Network(object):
                 '''test_accuracy = self.evaluate(test_data) / n_test
                 test_performance.append(test_accuracy)
                 print(test_performance)'''
-    def update_mini_batch(self, mini_batch, eta):
+                
+    def update_mini_batch(self, mini_batch, eta, mu=0.9):#agregue el factor mu
         """Aqui definimos la actualizacion de los bias y los weights de los minibatchs"""
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]# Usamos dos listas para almacenar las sumas de los gradientes de cada minibatch. Son del mismo tamano que las de las bias y los weights.
@@ -66,19 +67,18 @@ class Network(object):
             delta_nabla_b, delta_nabla_w = self.backprop(x, y)
             nabla_b = [nb+dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             nabla_w = [nw+dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+        '''voy a intentar comparar los tiempos en la SGD con y sin inercia (lo comentado es del d sgd simple)
         self.weights = [w-(eta/len(mini_batch))*nw
                         for w, nw in zip(self.weights, nabla_w)]
         self.biases = [b-(eta/len(mini_batch))*nb#Cuando se calculan todos los gradientes del minibatch, se actualizan los bias y los weights con la resta del aprendizaje.
                        for b, nb in zip(self.biases, nabla_b)]
-        # aqui es donde se actualizarían los pesos y los bias con la incercia del sgd.
-        
-        '''voy a intentar comparar los tiempos en la SGD con y sin inercia (lo comentado es del d inercia)
+        # aqui es donde se actualizarían los pesos y los bias con la incercia del sgd.'''
         self.velocity_weights = [mu * v - (eta / len(mini_batch)) * nw 
-                                 for v, nw in zip(self.velocity_weights, nabla_w)]
+                                 for v, nw in zip(self.velocity_weights, nabla_w)] #ahora a los pesos se agrega el factor de momento (mu) y vamos actualizando el valor del peso
         self.weights = [w + v for w, v in zip(self.weights, self.velocity_weights)]
     
-        self.velocity_biases = [mu * v - (eta / len(mini_batch)) * nb for v, nb in zip(self.velocity_biases, nabla_b)]
-        self.biases = [b + v for b, v in zip(self.biases, self.velocity_biases)]'''
+        self.velocity_biases = [mu * v - (eta / len(mini_batch)) * nb for v, nb in zip(self.velocity_biases, nabla_b)]#lo mismo con los bias.
+        self.biases = [b + v for b, v in zip(self.biases, self.velocity_biases)]
         
 
     
@@ -120,7 +120,7 @@ class Network(object):
     
 
 
-# In[3]:
+# In[6]:
 
 
 def sigmoid(z):
@@ -128,7 +128,7 @@ def sigmoid(z):
     return 1.0/(1.0+np.exp(-z))
 
 
-# In[4]:
+# In[7]:
 
 
 def sigmoid_prime(z):
